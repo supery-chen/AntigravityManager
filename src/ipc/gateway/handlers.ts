@@ -1,21 +1,20 @@
 /**
  * Gateway IPC Handlers
- * Provides ORPC handlers for controlling the API Gateway service
+ * Provides ORPC handlers for controlling the API Gateway service (NestJS version)
  */
-import { gatewayInstance } from './server';
+import { bootstrapNestServer, stopNestServer, getNestServerStatus } from '../../server/main';
 import { ConfigManager } from '../config/manager';
 import { v4 as uuidv4 } from 'uuid';
 
 /**
- * Start the gateway server
+ * Start the gateway server (NestJS)
  */
 export const startGateway = async (port: number): Promise<boolean> => {
   try {
-    if (gatewayInstance.isRunning()) {
-      await gatewayInstance.stop();
-    }
-    await gatewayInstance.start(port);
-    return true;
+    // Stop if already running
+    await stopNestServer();
+    // Start NestJS server
+    return await bootstrapNestServer(port);
   } catch (e) {
     console.error('Failed to start gateway:', e);
     return false;
@@ -23,12 +22,11 @@ export const startGateway = async (port: number): Promise<boolean> => {
 };
 
 /**
- * Stop the gateway server
+ * Stop the gateway server (NestJS)
  */
 export const stopGateway = async (): Promise<boolean> => {
   try {
-    await gatewayInstance.stop();
-    return true;
+    return await stopNestServer();
   } catch (e) {
     console.error('Failed to stop gateway:', e);
     return false;
@@ -36,10 +34,10 @@ export const stopGateway = async (): Promise<boolean> => {
 };
 
 /**
- * Get gateway status
+ * Get gateway status (NestJS)
  */
 export const getGatewayStatus = async () => {
-  return gatewayInstance.getStatus();
+  return getNestServerStatus();
 };
 
 /**

@@ -13,7 +13,7 @@ import { CloudMonitorService } from './services/CloudMonitorService';
 
 // Static Imports to fix Bundle Resolution Errors
 import { AuthServer } from './ipc/cloud/authServer';
-import { gatewayInstance } from './ipc/gateway/server';
+import { bootstrapNestServer, stopNestServer } from './server/main';
 import { initTray, setTrayLanguage } from './ipc/tray/handler';
 import { rpcHandler } from './ipc/handler';
 import { ConfigManager } from './ipc/config/manager';
@@ -218,12 +218,12 @@ app
       // Start OAuth Server
       AuthServer.start();
 
-      // Gateway Server - use singleton, auto-start if enabled
+      // Gateway Server (NestJS) - auto-start if enabled
       const config = ConfigManager.loadConfig();
       if (config.proxy?.auto_start) {
         const port = config.proxy?.port || 8045;
-        gatewayInstance.start(port);
-        logger.info(`Gateway: Auto-started on port ${port}`);
+        await bootstrapNestServer(port);
+        logger.info(`NestJS Proxy: Auto-started on port ${port}`);
       }
 
       const enabled = CloudAccountRepo.getSetting('auto_switch_enabled', false);
@@ -235,7 +235,7 @@ app
       logger.error('Startup: Failed to initialize services', e);
     }
   })
-  .then(() => {
+  .then(async () => {
     logger.info('Step: Startup Complete');
     if (globalMainWindow) {
       initTray(globalMainWindow);
@@ -249,9 +249,10 @@ app
 //osX only
 app.on('window-all-closed', () => {
   logger.info('Window all closed event triggered');
-  // if (process.platform !== 'darwin') {
-  //   app.quit();
-  // }
+  stopNestServer(); // Stop server
+  if (process.platform !== 'darwin') {
+    app.quit();
+  }
   // Keep app running for tray
 });
 
