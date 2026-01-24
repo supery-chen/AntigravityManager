@@ -78,7 +78,7 @@ const config: ForgeConfig = {
           name: 'AntigravityManager',
         },
         draft: true,
-        prerelease: true,
+        prerelease: false,
       },
     },
   ],

@@ -223,6 +223,16 @@ process.on('unhandledRejection', (reason) => {
 
 app
   .whenReady()
+  .then(async () => {
+    logger.info('Step: Initialize CloudAccountRepo');
+    try {
+      await CloudAccountRepo.init();
+    } catch (e) {
+      logger.error('Startup: Failed to initialize CloudAccountRepo', e);
+      // We might want to exit here or show a dialog, but for now we proceed
+      // though functionality will be broken.
+    }
+  })
   .then(() => {
     logger.info('Step: setupORPC');
     return setupORPC();
@@ -242,9 +252,6 @@ app
   .then(async () => {
     // Initialize Cloud Monitor if enabled
     try {
-      // Initialize DB & Migrate to Encrypted Storage
-      await CloudAccountRepo.init();
-
       // Start OAuth Server
       AuthServer.start();
 
