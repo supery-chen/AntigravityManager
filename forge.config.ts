@@ -74,7 +74,7 @@ const config: ForgeConfig = {
       name: '@electron-forge/publisher-github',
       config: {
         repository: {
-          owner: 'Draculabo',
+          owner: 'supery-chen',
           name: 'AntigravityManager',
         },
         draft: true,
