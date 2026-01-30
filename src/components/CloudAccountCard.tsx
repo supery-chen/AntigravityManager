@@ -18,8 +18,9 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Checkbox } from '@/components/ui/checkbox';
 
-import { MoreVertical, Trash, RefreshCw, Box, Power } from 'lucide-react';
-import { formatDistanceToNow } from 'date-fns';
+
+import { MoreVertical, Trash, RefreshCw, Box, Power, Clock } from 'lucide-react';
+import { formatDistanceToNow, intervalToDuration, isPast, parseISO } from 'date-fns';
 import { Badge } from '@/components/ui/badge';
 import { useTranslation } from 'react-i18next';
 
@@ -53,6 +54,31 @@ export function CloudAccountCard({
     if (percentage > 80) return 'text-green-500';
     if (percentage > 20) return 'text-yellow-500';
     return 'text-red-500';
+  };
+
+  const formatCompactDuration = (dateStr: string) => {
+    if (!dateStr) return null;
+    try {
+      const targetDate = parseISO(dateStr);
+      if (isPast(targetDate)) return null;
+
+      const duration = intervalToDuration({
+        start: new Date(),
+        end: targetDate,
+      });
+
+      const { days, hours, minutes } = duration;
+      const parts = [];
+
+      if (days && days > 0) parts.push(`${days}d`);
+      if (hours && hours > 0) parts.push(`${hours}h`);
+      if (minutes && minutes > 0) parts.push(`${minutes}m`);
+      if (parts.length === 0) return '<1m';
+
+      return parts.join('');
+    } catch (e) {
+      return null;
+    }
   };
 
   const modelQuotas = Object.entries(account.quota?.models || {});
@@ -168,19 +194,32 @@ export function CloudAccountCard({
 
         <div className="space-y-2">
           {modelQuotas.length > 0 ? (
-            modelQuotas.map(([modelName, info]) => (
-              <div key={modelName} className="flex items-center justify-between text-sm">
-                <span className="text-muted-foreground max-w-[120px] truncate" title={modelName}>
-                  {modelName.replace('models/', '')}
-                </span>
-                <div className="flex items-center gap-2">
-                  <span className={`font-mono font-bold ${getQuotaColor(info.percentage)}`}>
-                    {info.percentage}%
+            modelQuotas.map(([modelName, info]) => {
+              const resetTimeStr = formatCompactDuration(info.resetTime);
+              return (
+                <div key={modelName} className="flex items-center justify-between text-sm">
+                  <span className="text-muted-foreground max-w-[120px] truncate" title={modelName}>
+                    {modelName.replace('models/', '')}
                   </span>
-                  <span className="text-muted-foreground text-xs">{t('cloud.card.left')}</span>
+                  <div className="flex items-center gap-1">
+                    {resetTimeStr && (
+                      <div
+                        className="text-muted-foreground/80 flex items-center gap-0.5 text-[9px]"
+                      >
+                        <Clock className="h-2 w-2" />
+                        <span>{resetTimeStr}</span>
+                      </div>
+                    )}
+                    <div className="flex items-center gap-2 min-w-[60px] justify-end">
+                      <span className={`font-mono font-bold ${getQuotaColor(info.percentage)}`}>
+                        {info.percentage}%
+                      </span>
+                      <span className="text-muted-foreground text-xs">{t('cloud.card.left')}</span>
+                    </div>
+                  </div>
                 </div>
-              </div>
-            ))
+              );
+            })
           ) : (
             <div className="text-muted-foreground flex flex-col items-center justify-center py-4">
               <Box className="mb-2 h-8 w-8 opacity-20" />
